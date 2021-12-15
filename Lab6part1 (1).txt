@@ -1,0 +1,143 @@
+;Adrineh Khodaverdian
+;Tony Biehl
+;CS/IS 165
+section .text
+
+global _start
+sum   equ  0
+highest equ  2
+_start:
+
+    sub     esp, 4  ; allocate 2 bytes for total,highest, x
+    mov     ebp, esp
+
+    mov     ecx, name  ; print message
+    mov     edx, nlen   ; length 1 char
+    mov     ebx, 1
+    mov     eax, 4
+    int     0x80
+    
+    mov     word[ebp+highest],0 ; set highest = 0
+    mov     word[ebp+sum],0 ; set sum = 0
+    
+    mov     ecx, 7 ;for loop counter 
+    mov     ebx, theArray
+    mov     edi, 0 ; the index for the array
+for:
+    mov    ax,[ebx + edi]
+    cmp    [ebp + highest], ax        
+    jg     endf
+    mov    [ebp+highest], ax
+    
+endf:
+    mov     ax, [ebp+sum]
+    add     ax, [ebx+edi]
+    mov     [ebp+sum],ax
+   
+    
+    ;printing the array
+    mov     ax, [ebx+edi]  ; get a word
+    push    ebx
+    push    ecx           ; save
+    call    printnum
+    mov     ecx, space  ; print message
+    mov     edx, 1   ; length 1 char
+    mov     ebx, 1
+    mov     eax, 4
+    int     0x80
+    pop  ecx
+    pop  ebx
+
+    add     edi,2 ;increment by 2
+    loop for
+  
+    mov     ecx, nl ; print new line
+    mov     edx, 1   ; length 1 char
+    mov     ebx, 1
+    mov     eax, 4
+    int     0x80
+    
+    mov     ecx, sms  ; print message
+    mov     edx, slen   ; length 1 char
+    mov     ebx, 1
+    mov     eax, 4
+    int     0x80
+    mov     ax, [ebp+sum]
+    call    printnum
+    
+    mov     ecx, nl ; print new line
+    mov     edx, 1   ; length 1 char
+    mov     ebx, 1
+    mov     eax, 4
+    int     0x80
+    
+    mov     ecx, hval  ; print message
+    mov     edx, hlen   ; length 1 char
+    mov     ebx, 1
+    mov     eax, 4
+    int     0x80
+    mov     ax, [ebp+highest]
+    call    printnum
+    add     esp,4
+    
+
+    
+    mov     eax, 1    ; exit
+    int     0x80
+    
+
+    
+printnum:       ; print the decimal value in ax
+    cmp ax, 0   ; negative?
+    jge noneg   ; no
+    neg ax      ; yes, negate
+    push ax     ; save
+    mov     ecx, minus  ; print a '-'
+    mov     edx, 1
+    mov     ebx, 1
+    mov     eax, 4
+    int     0x80
+    pop ax      ; get value back
+noneg:
+    mov   dx, '!' ; set up an end flag on stack
+    push  dx
+
+ldig:             ; get a digit
+    mov cx, 10    ; divide by 10
+    mov dx, 0     ; make sure nothing is in dx (dx:ax is a pair for div)
+    div cx        ; divide
+    push dx       ; push the remainder (which is the digit)
+    cmp ax, 0     ; is ax finished
+    jnz  ldig     ; no, continue
+
+lprt:             ; now get the digits to print
+    pop dx        ; pop the digit
+    cmp dx, '!'   ; end flag?
+    jz eprt       ; yep, done printing
+    add dx, '0'   ; no, make digit printable
+    mov [digit], dl ; put into memory
+    mov     ecx, digit ; print it
+    mov     edx, 1
+    mov     ebx, 1
+    mov     eax, 4
+    int     0x80
+    jmp lprt      ; next digit
+eprt: ret         ; leave
+
+section .data
+    name db "Array[] = "
+    nlen equ $ - name
+    theArray dw 12, 40, -2, 89, 35, -7, 6
+    sms db  "sum is: "
+    slen equ $ - sms
+    hval db "Highest value is:"
+    hlen equ $ - hval
+    minus db '-'
+    nl  db  0x0a
+    space db " "
+
+    length dw 2
+segment .bss
+    digit resb 1
+
+
